@@ -16,27 +16,40 @@ print page_header();
 # some globals used through the script
 $debug = 1;
 $students_dir = "./students";
+$range = 10;
 
-print browse_screen();
+
+&show_pages();
 print page_trailer();
-exit 0;	
+exit 0;
 
-sub browse_screen {
-	my $n = param('n') || 0;
-	my @students = glob("$students_dir/*");
+sub show_pages {
+    my $n = param('n') || 0;
+    opendir(DIR, $students_dir) || die "Can't open directory $students_dir"; 
+	my @students = grep (!/^(\.|\.\.)$/, readdir(DIR));
+	print "@students\n";
 	$n = min(max($n, 0), $#students);
-	param('n', $n + 1);
-	my $student_to_show  = $students[$n];
-	my $profile_filename = "$student_to_show/profile.txt";
-	open my $p, "$profile_filename" or die "can not open $profile_filename: $!";
-	$profile = join '', <$p>;
-	close $p;
-	
-	return p,
-		start_form, "\n",
-		pre($profile),"\n",
-		hidden('n', $n + 1),"\n",
-		submit('Next student'),"\n",
+		
+	print p,
+		start_form, "\n";
+		if (defined param('Next '.$range.' users')) {
+		    $n = min($n + $range, $#students);
+		    param('n', $n);
+		}
+		elsif(defined param('Previous '.$range.' users')){
+		    $n = max($n - $range, 0);
+		    param('n', $n);
+		}
+		print "n = $n<br><br><br><br>\n";
+		foreach $i (0..$range - 1){
+		    if ($students[$n + $i]) {
+		        my $id = $n + $i;
+		        print "<a href=\"./detail.cgi?index=$id $n\">$students[$n + $i]</a><br><br>\n";
+	        }
+		}
+	print hidden('n', $n),"\n",
+	    submit('Previous '.$range.' users'),"\n",
+		submit('Next '.$range.' users'),"\n",
 		end_form, "\n",
 		p, "\n";
 }
@@ -61,3 +74,19 @@ sub page_trailer {
 	$html .= end_html;
 	return $html;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
