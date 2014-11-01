@@ -10,55 +10,86 @@ use Data::Dumper;
 use List::Util qw/min max/;
 warningsToBrowser(1);
 
+use CGI::Session;
+
+my $cgi= new CGI;
+my $session = new CGI::Session("driver:File", $cgi, {Directory=>'/tmp'});
+$session->expire(120);
+my $cookie = $cgi->cookie(CGISESSID => $session->id);
+
+
 # print start of HTML ASAP to assist debugging if there is an error in the script
-print page_header();
+print page_header(), "\n";
+print $cookie, "<br>\n";
 
 # some globals used through the script
 $debug = 1;
 $students_dir = "./students";
-$range = 10;
 
-
-&show_pages();
+if (!defined $session->param("user_name")){
+    &validation();
+}
+else{
+    print "You have already authenticated.<br>\n",
+    "Redirecting....\n";
+    print "<META http-equiv=\"Refresh\" content=\"2; url=./home.cgi\">"
+}
 print page_trailer();
 exit 0;
 
-sub show_pages {
-    my $n = param('n') || 0;
-    opendir(DIR, $students_dir) || die "Can't open directory $students_dir"; 
-	my @students = grep (!/^(\.|\.\.)$/, readdir(DIR));
-	print "@students\n";
-	$n = min(max($n, 0), $#students);
-		
-	print p,
-		start_form, "\n";
-		if (defined param('Next '.$range.' users')) {
-		    $n = min($n + $range, $#students);
-		    param('n', $n);
-		}
-		elsif(defined param('Previous '.$range.' users')){
-		    $n = max($n - $range, 0);
-		    param('n', $n);
-		}
-		print "n = $n<br><br><br><br>\n";
-		foreach $i (0..$range - 1){
-		    if ($students[$n + $i]) {
-		        my $id = $n + $i;
-		        print "<a href=\"./detail.cgi?index=$id $n\">$students[$n + $i]</a><br><br>\n";
-	        }
-		}
-	print hidden('n', $n),"\n",
-	    submit('Previous '.$range.' users'),"\n",
-		submit('Next '.$range.' users'),"\n",
-		end_form, "\n",
-		p, "\n";
+
+sub validation() {
+    $username = param('username');
+    $password = param('password');
+    if (!defined $username && !defined $password) {
+        print start_form,
+            'Username: ',
+            textfield('username'), "<br>\n",
+            'Password: ',
+            password_field('password'), "<br>\n",
+            submit('Go'),"\n",
+            end_form,
+            end_html;
+        exit(0);
+    }
+    else {
+        # sanitize username
+        $username = substr $username, 0, 256;
+        $username =~ s/\W//g;
+
+        my $profile_path = "$students_dir/$username/profile.txt";
+        if (!open F, '<', $profile_path) {
+            print "Unknown username!\n";
+        }
+        else {
+            my @profile = <F>;
+            foreach $i (0..$#profile) {
+                if ($profile[$i] =~ /^password:/) {
+                    $correct_password = $profile[$i + 1];
+                }
+            }
+            $correct_password =~ s/(\s*)//g;
+            if ($password eq $correct_password) {
+                print "You are authenticated.<br>\n";
+                print "Redirecting....\n";
+                $session->param('user_name', $username);
+                print "<META http-equiv=\"Refresh\" content=\"1; url=./home.cgi\">"
+            }
+            else {
+                print "Incorrect password!\n";
+            }
+        }
+        print end_html;
+        exit(0);
+    }
 }
 
 #
 # HTML placed at bottom of every screen
 #
 sub page_header {
-	return header,
+	return #header,
+	    $session->header(),
    		start_html("-title"=>"LOVE2041", -bgcolor=>"#FEDCBA"),
  		center(h2(i("LOVE2041")));
 }
