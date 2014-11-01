@@ -20,78 +20,49 @@ my $cookie = $session->id;
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
 &userinfo();
+print "cookie is: ", $cookie, "<br>\n";
+print "-------------------$username--------------------<br>\n";
 
 # some globals used through the script
 $debug = 1;
 $students_dir = "./students";
+$range = 10;
 
-
-print browse_screen();
+$search_input = param('input');
+&do_search($search_input);
 print page_trailer();
 exit 0;
 
-
-sub browse_screen {
-    my $index = param('index');
-    print "index = $index\n";
-    @temp = split (" ", $index);
-	my $id = param('id') || $temp[0] || 0;
-	print "id = $id\n";
-	my $page = $temp[1] || 0;
-	my @students = glob("$students_dir/*");
-	$id = min(max($id, 0), $#students);
-	param('id', $id + 1);
-	my $student_to_show = $students[$id];
-	my $username = param('username');
-	if (defined $username) {
-	    $student_to_show  = "$students_dir/$username";
-	}
-	my $profile_filename = "$student_to_show/profile.txt";
-	open my $p, "$profile_filename" or die "can not open $profile_filename: $!";
-	$profile = join '', <$p>;
-	@temp_profile = split '\n', $profile;
-	# Remove the private profile.
-	my $i = 0;
-	$profile = '';
-	$private_flag = "false";
-	while ($i < @temp_profile) {
-	    # If any private content is more than one line.
-	    if ($private_flag eq "true" && $temp_profile[$i] =~ /^\s+/) {
-	        ++$i;
-	        next;
-	    }
-	    $private_flag = "false";
-	    if ($temp_profile[$i] eq "name:" || $temp_profile[$i] eq "email:"
-	    || $temp_profile[$i] eq "password:" || $temp_profile[$i] eq "courses:") {
-	        $private_flag = "true";
-	        # jump the subtitle line.
-	        # jump the content line.
-	        $i += 2;
-	        next;
-	    }
-	    $profile .= $temp_profile[$i]."\n";
-	    ++$i;
-	}
-	close $p;
-	if (-e "$student_to_show/profile.jpg") {
-    	print '<img src="'.$student_to_show.'/profile.jpg">';
-	}
-	if (defined $username) {
-	    foreach $i (0..$#students) {
-	        #print $students[$i];
-	        if ($students[$i] eq "$students_dir/$username") {
-	            $id = $i;
-	            param('id', $id + 1);
-	        }
-	    }
-	}
-	
-	return p,
-		start_form, "\n",
+sub do_search() {
+    my $input = $_[0];
+    
+	my $n = param('n') || 0;
+    opendir(DIR, $students_dir) || die "Can't open directory $students_dir"; 
+	my @students = grep (/$input/i, readdir(DIR));
+	@students = grep (!/^(\.|\.\.)$/, @students);
+	#print "@students\n";
+	$n = min(max($n, 0), $#students);
 		
-		pre($profile),"\n",
-		hidden('id', $id + 1),"\n",
-		submit('Next student'),"\n",
+	print p,
+		start_form, "\n";
+		if (defined param('Next '.$range.' users')) {
+		    $n = min($n + $range, $#students);
+		    param('n', $n);
+		}
+		elsif(defined param('Previous '.$range.' users')){
+		    $n = max($n - $range, 0);
+		    param('n', $n);
+		}
+		print "n = $n<br><br><br><br>\n";
+		foreach $i (0..$range - 1){
+		    if ($students[$n + $i]) {
+		        my $id = $n + $i;
+		        print "<a href=\"./detail.cgi?username=$students[$n + $i]\">$students[$n + $i]</a><br><br>\n";
+	        }
+		}
+	print hidden('n', $n),"\n",
+	    submit('Previous '.$range.' users'),"\n",
+		submit('Next '.$range.' users'),"\n",
 		end_form, "\n",
 		p, "\n";
 }

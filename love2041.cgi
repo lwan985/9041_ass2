@@ -14,7 +14,7 @@ use CGI::Session;
 
 my $cgi= new CGI;
 my $session = new CGI::Session("driver:File", $cgi, {Directory=>'/tmp'});
-$session->expire(120);
+$session->expire(900);
 my $cookie = $cgi->cookie(CGISESSID => $session->id);
 
 

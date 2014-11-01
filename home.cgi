@@ -20,7 +20,7 @@ my $cookie = $session->id;
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
 &userinfo();
-print $cookie, "\n";
+print "cookie is: ", $cookie, "<br>\n";
 print "-------------------$username--------------------<br>\n";
 
 # some globals used through the script
@@ -28,16 +28,32 @@ $debug = 1;
 $students_dir = "./students";
 $range = 10;
 
+if (defined param('search_input')){
+    my $input = param('search_input');
+    print "<META http-equiv=\"Refresh\" content=\"0; url=./search_results.cgi?input=$input\">";
+    exit 0;
+}
 
+&show_search();
 &show_pages();
 print page_trailer();
 exit 0;
+
+sub show_search {
+    print "<center>\n";
+    print "Please search for an user name.", "<br>\n";
+    print start_form,
+        textfield('search_input'), "<br>\n",
+        submit('Search'),"\n",
+        end_form,
+        "</center>";
+}
 
 sub show_pages {
     my $n = param('n') || 0;
     opendir(DIR, $students_dir) || die "Can't open directory $students_dir"; 
 	my @students = grep (!/^(\.|\.\.)$/, readdir(DIR));
-	print "@students\n";
+	#print "@students\n";
 	$n = min(max($n, 0), $#students);
 		
 	print p,
@@ -68,8 +84,8 @@ sub show_pages {
 # HTML placed at bottom of every screen
 #
 sub page_header {
-	return #header,
-	    $session->header(),
+	return header,
+	    #$session->header(),
    		start_html("-title"=>"LOVE2041", -bgcolor=>"#FEDCBA"),
  		center(h2(i("LOVE2041")));
 }
