@@ -14,13 +14,13 @@ use CGI::Session;
 
 my $cgi= new CGI;
 my $session = new CGI::Session("driver:File", $cgi, {Directory=>'/tmp'});
-$session->expire(900);
+$session->expire(9000);
 my $cookie = $cgi->cookie(CGISESSID => $session->id);
 
 
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header(), "\n";
-print $cookie, "<br>\n";
+#print $cookie, "<br>\n";
 
 # some globals used through the script
 $debug = 1;
@@ -30,9 +30,11 @@ if (!defined $session->param("user_name")){
     &validation();
 }
 else{
+    print "<center>";
     print "You have already authenticated.<br>\n",
     "Redirecting....\n";
-    print "<META http-equiv=\"Refresh\" content=\"2; url=./home.cgi\">"
+    print "<META http-equiv=\"Refresh\" content=\"2; url=./home.cgi\">";
+    print "</center>";
 }
 print page_trailer();
 exit 0;
@@ -42,14 +44,16 @@ sub validation() {
     $username = param('username');
     $password = param('password');
     if (!defined $username && !defined $password) {
-        print start_form,
+        print "<center>",
+            start_form,
             'Username: ',
             textfield('username'), "<br>\n",
             'Password: ',
             password_field('password'), "<br>\n",
             submit('Go'),"\n",
             end_form,
-            end_html;
+            end_html,
+            "</center>";
         exit(0);
     }
     else {
@@ -59,7 +63,9 @@ sub validation() {
 
         my $profile_path = "$students_dir/$username/profile.txt";
         if (!open F, '<', $profile_path) {
+            print "<center>";
             print "Unknown username!\n";
+            print "</center>";
         }
         else {
             my @profile = <F>;
@@ -70,13 +76,17 @@ sub validation() {
             }
             $correct_password =~ s/(\s*)//g;
             if ($password eq $correct_password) {
+                print "<center>";
                 print "You are authenticated.<br>\n";
                 print "Redirecting....\n";
                 $session->param('user_name', $username);
-                print "<META http-equiv=\"Refresh\" content=\"1; url=./home.cgi\">"
+                print "<META http-equiv=\"Refresh\" content=\"1; url=./home.cgi\">";
+                print "</center>";
             }
             else {
+                print "<center>";
                 print "Incorrect password!\n";
+                print "</center>";
             }
         }
         print end_html;

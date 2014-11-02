@@ -20,8 +20,7 @@ my $cookie = $session->id;
 # print start of HTML ASAP to assist debugging if there is an error in the script
 print page_header();
 &userinfo();
-print "cookie is: ", $cookie, "<br>\n";
-print "-------------------$username--------------------<br>\n";
+#print "cookie is: ", $cookie, "<br>\n";
 
 # some globals used through the script
 $debug = 1;
@@ -44,7 +43,8 @@ sub show_search {
     print "Please search for an user name.", "<br>\n";
     print start_form,
         textfield('search_input'), "<br>\n",
-        submit('Search'),"\n",
+        submit('Search'),"<br>\n",
+        "<a href=\"./matching.cgi?user=$username\">Try to find your matching\!</a><br><br>\n",
         end_form,
         "</center>";
 }
@@ -56,7 +56,8 @@ sub show_pages {
 	#print "@students\n";
 	$n = min(max($n, 0), $#students);
 		
-	print p,
+	print "<center>",
+	    p,
 		start_form, "\n";
 		if (defined param('Next '.$range.' users')) {
 		    $n = min($n + $range, $#students);
@@ -66,7 +67,7 @@ sub show_pages {
 		    $n = max($n - $range, 0);
 		    param('n', $n);
 		}
-		print "n = $n<br><br><br><br>\n";
+		print "~~Look Around~~<br>\n";
 		foreach $i (0..$range - 1){
 		    if ($students[$n + $i]) {
 		        my $id = $n + $i;
@@ -77,7 +78,8 @@ sub show_pages {
 	    submit('Previous '.$range.' users'),"\n",
 		submit('Next '.$range.' users'),"\n",
 		end_form, "\n",
-		p, "\n";
+		p, "\n",
+		"</center>";
 }
 
 #
@@ -112,9 +114,11 @@ sub userinfo {
         print "</div>";
     }
     else {
+        print "<center>";
         print "You are not logged in yet.<br>\n";
         print "Redirecting....\n";
-        print "<META http-equiv=\"Refresh\" content=\"3; url=./love2041.cgi\">";
+        print "<META http-equiv=\"Refresh\" content=\"1; url=./love2041.cgi\">";
+        print "</center>";
         exit 0;
     }
 }

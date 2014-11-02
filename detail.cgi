@@ -33,10 +33,10 @@ exit 0;
 
 sub browse_screen {
     my $index = param('index');
-    print "index = $index\n";
+    #print "index = $index\n";
     @temp = split (" ", $index);
 	my $id = param('id') || $temp[0] || 0;
-	print "id = $id\n";
+	#print "id = $id\n";
 	my $page = $temp[1] || 0;
 	my @students = glob("$students_dir/*");
 	$id = min(max($id, 0), $#students);
@@ -127,9 +127,11 @@ sub userinfo {
         print "</div>";
     }
     else {
+        print "<center>";
         print "You are not logged in yet.<br>\n";
         print "Redirecting....\n";
         print "<META http-equiv=\"Refresh\" content=\"1; url=./love2041.cgi\">";
+        print "</center>";
         exit 0;
     }
 }
